@@ -15,12 +15,12 @@ $code = $_GET['code'] ?? '';
 
 if (!is_string($code)) {
   http_response_code(404);
-  exit('Not Found');
+  case404();
 }
 
 if (!preg_match('/^[A-Za-z0-9_-]{4,32}$/', $code)) {
   http_response_code(404);
-  exit('Not Found');
+  case404();
 }
 
 try {
@@ -54,7 +54,7 @@ try {
 
 if (!$link) {
   http_response_code(404);
-  exit('Not Found');
+  case404();
 }
 
 $destinationUrl = (string) $link['destination_url'];
@@ -121,3 +121,77 @@ if ($method === 'GET') {
 header('Cache-Control: no-store, private');
 header('Location: ' . $destinationUrl, true, 302);
 exit;
+
+function case404()
+{
+?>
+  <!DOCTYPE html>
+  <html lang="ja">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Not Found</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        color: #888888;
+        font-family: Arial, "Helvetica Neue", "Hiragino Kaku Gothic ProN",
+          "Yu Gothic", Meiryo, sans-serif;
+        text-align: center;
+      }
+
+      .error-page {
+        padding: 20px;
+      }
+
+      .error-code {
+        margin: 0;
+        font-size: clamp(100px, 20vw, 200px);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.05em;
+      }
+
+      .error-title {
+        margin: 24px 0 8px;
+        font-size: clamp(24px, 5vw, 40px);
+        font-weight: 400;
+      }
+
+      .error-message {
+        margin: 0;
+        font-size: clamp(15px, 3vw, 18px);
+        line-height: 1.8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="error-page">
+      <h1 class="error-code">404</h1>
+      <p class="error-title">Not Found.</p>
+      <p class="error-message">ページが見つかりませんでした。</p>
+    </main>
+  </body>
+
+  </html>
+
+<?php
+  exit;
+}
