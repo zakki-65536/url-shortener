@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
-require '../config.php';
+require_once '../config.php';
+require_once __DIR__ . '/session.php';
+
+requireLogin();
+$csrfToken = getCsrfToken();
 
 const APP_TIMEZONE = 'Asia/Tokyo';
 
@@ -526,6 +530,21 @@ $totalAccess = (int) $statistics['total_access'];
         <?php endif; ?>
       </section>
     </main>
+
+    <footer>
+      <div style="text-align: center; margin-top: 48px;">
+        <form action="logout.php" method="POST">
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+          <button class="button button--secondary" type="submit">
+            ログアウト
+          </button>
+        </form>
+        <span style="display: block; margin-top: 16px;">&copy; 2026 okzks</span>
+      </div>
+    </footer>
   </div>
 
 </body>

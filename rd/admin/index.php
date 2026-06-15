@@ -2,30 +2,14 @@
 
 declare(strict_types=1);
 
-require '../config.php';
+require_once '../config.php';
+require_once __DIR__ . '/session.php';
 
-// CSRF対策
-session_set_cookie_params([
-  'lifetime' => 0,
-  'path'     => '/',
-  'secure'   => true,
-  'httponly' => true,
-  'samesite' => 'Strict',
-]);
-
-session_start();
-
-if (!isset($_SESSION['csrf_token'])) {
-  $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
-$csrfToken = (string) $_SESSION['csrf_token'];
+requireLogin();
+$csrfToken = getCsrfToken();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $postedToken = $_POST['csrf_token'] ?? '';
-  echo $csrfToken . "<br>";
-  echo $postedToken . "<br>";
-
   if (
     !is_string($postedToken) ||
     !hash_equals($csrfToken, $postedToken)
@@ -86,12 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (
     $customCode !== '' &&
     !preg_match(
-      '/^[A-Za-z0-9_-]{4,32}$/',
+      '/^[A-Za-z0-9_-]{6,32}$/',
       $customCode
     )
   ) {
     $errors[] =
-      'コードは4～32文字の英数字、ハイフン、アンダースコアで入力してください。';
+      'コードは6～32文字の英数字、ハイフン、アンダースコアで入力してください。';
   }
 
   if (mb_strlen($place, 'UTF-8') > 255) {
@@ -131,9 +115,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           ':target'          => $target
         ]);
 
-        $_SESSION['message'] =
-          '短縮URLを登録しました: ' .
-          PUBLIC_BASE_URL . '/' . $code;
+        if ($place && $target) {
+          $_SESSION['message'] =
+            '短縮URLを登録しました（' .
+            $target . "【" . $place . "】）: " . PUBLIC_BASE_URL . '/' . $code;
+        } else {
+          $_SESSION['message'] =
+            '短縮URLを登録しました: ' .
+            PUBLIC_BASE_URL . '/' . $code;
+        }
+
 
         $created = true;
         break;
@@ -206,7 +197,6 @@ $totalLinks = (int) db()
 <body>
 
   <div class="page-container">
-
     <header class="page-header">
       <div>
         <p class="eyebrow">URL SHORTENER</p>
@@ -227,6 +217,26 @@ $totalLinks = (int) db()
 
 
     <main>
+      <?php if ($message): ?>
+        <div class="alert alert-success">
+          <div class="alert-content">
+            <?= e($message) ?>
+          </div>
+          <button type="button" class="alert-close" aria-label="メッセージを閉じる">×</button>
+        </div>
+      <?php endif; ?>
+
+      <?php if (!empty($errors)): ?>
+        <div class="alert alert-error">
+          <div class="alert-content">
+            <?php foreach ($errors as $error): ?>
+              <p><?= e($error) ?></p>
+            <?php endforeach; ?>
+          </div>
+          <button type="button" class="alert-close" aria-label="エラーメッセージを閉じる">×</button>
+        </div>
+      <?php endif; ?>
+
       <section class="panel" aria-labelledby="registeredUrlTitle">
 
         <div class="panel-header">
@@ -351,6 +361,20 @@ $totalLinks = (int) db()
 
       </section>
     </main>
+    <footer>
+      <div style="text-align: center; margin-top: 48px;">
+        <form action="logout.php" method="POST">
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+          <button class="button button--secondary" type="submit">
+            ログアウト
+          </button>
+        </form>
+        <span style="display: block; margin-top: 16px;">&copy; 2026 okzks</span>
+      </div>
+    </footer>
 
   </div>
 
@@ -361,19 +385,6 @@ $totalLinks = (int) db()
     id="createModal"
     aria-labelledby="createModalTitle">
     <div class="modal-content">
-      <?php if ($message): ?>
-        <p class="message"><?= e($message) ?></p>
-      <?php endif; ?>
-
-      <?php if (!empty($errors)): ?>
-        <div class="error">
-          <?php foreach ($errors as $error): ?>
-            <p><?= e($error) ?></p>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-
-
       <header class="modal-header">
         <div>
           <p class="eyebrow">CREATE NEW URL</p>
@@ -461,7 +472,7 @@ $totalLinks = (int) db()
               type="text"
               id="shortCode"
               name="code"
-              minlength="4"
+              minlength="6"
               maxlength="32"
               pattern="[A-Za-z0-9_-]+"
               placeholder="aB3x9K">
