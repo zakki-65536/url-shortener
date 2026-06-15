@@ -206,6 +206,7 @@ a:hover {
     grid-template-columns: minmax(110px, 170px) minmax(0, 1fr);
     gap: 24px;
     padding: 20px 22px;
+    align-items: center;
 }
 
 .url-information__item + .url-information__item {
@@ -722,6 +723,14 @@ a:hover {
     color: var(--danger);
     border-color: #ffd5d1;
     background: var(--danger-soft);
+}
+
+.detail-url-target {
+    overflow-wrap: anywhere;
+    color: var(--primary);
+    font-size: 0.88rem;
+    text-decoration: none;
+    font-weight: normal;
 }
 
 @media (max-width: 600px) {

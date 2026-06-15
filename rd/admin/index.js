@@ -31,32 +31,34 @@
 
 
         // 新規登録モーダルを開く
-        openCreateModalButton.addEventListener("click", () => {
-            createModal.showModal();
+        if(openCreateModalButton){
+            openCreateModalButton.addEventListener("click", () => {
+                createModal.showModal();
 
-            requestAnimationFrame(() => {
-                titleInput.focus();
+                requestAnimationFrame(() => {
+                    titleInput.focus();
+                });
             });
-        });
-
+        }
 
         // 登録済みURLの詳細モーダルを開く
         const openDetailModal = (row) => {
             const {
-                title,
                 status,
                 createdAt,
                 shortUrl,
                 destinationUrl,
-                detailUrl
+                detailUrl,
+                target,
+                place
             } = row.dataset;
 
             detailModalTitle.textContent =
-                title || "URL登録内容";
+                target&&place ? target+"【"+place+"】" : "URL登録内容";
 
             detailModalMeta.textContent =
                 createdAt
-                    ? `登録日：${createdAt}`
+                    ? `登録日時：${createdAt}`
                     : "";
 
             modalStatus.textContent =
@@ -128,4 +130,53 @@
                 }
             });
         });
+    })();
+
+    (() => {
+      const notice = document.getElementById('copyNotice');
+      let noticeTimer;
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        const copied = document.execCommand('copy');
+        textarea.remove();
+
+        if (!copied) {
+          throw new Error('コピーに失敗しました。');
+        }
+      }
+
+      document.querySelectorAll('.copy-button').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const row = button.closest('.copy-row');
+          const valueElement = row.querySelector('.copy-value');
+          const label = button.querySelector('.copy-button__label');
+          const value = valueElement.textContent.trim();
+
+          try {
+            await copyText(value);
+
+            button.classList.add('copy-button--copied');
+            label.textContent = 'コピー済み';
+            setTimeout(() => {
+              button.classList.remove('copy-button--copied');
+              label.textContent = 'コピー';
+            }, 1800);
+          } catch (error) {
+          }
+        });
+      });
     })();

@@ -84,7 +84,8 @@ $linkStatement = $pdo->prepare(
         id,
         code,
         destination_url,
-        title,
+        place,
+        target,
         is_active,
         expires_at,
         created_at
@@ -255,8 +256,8 @@ try {
 }
 
 $shortUrl = rtrim((string) PUBLIC_BASE_URL, '/') . '/' . rawurlencode((string) $link['code']);
-$title = trim((string) $link['title']);
-$pageTitle = $title !== '' ? $title : (string) $link['code'];
+$title = trim((string) $link['target'] . "【" . (string) $link['place'] . "】");
+$pageTitle = $title !== '【】' ? $title : (string) $link['code'];
 $createdAt = new DateTimeImmutable((string) $link['created_at'], $timezone);
 
 $dailyMaximum = max(1, ...array_values($dailyAccess));
@@ -332,16 +333,9 @@ $totalAccess = (int) $statistics['total_access'];
             <dt>転送先</dt>
             <dd>
               <div class="copy-row">
-                <span class="copy-value" title="<?= detailEscape($link['destination_url']) ?>">
+                <a class="detail-url-target" href="<?= detailEscape($link['destination_url']) ?>">
                   <?= detailEscape($link['destination_url']) ?>
-                </span>
-
-                <button
-                  class="copy-button"
-                  type="button"
-                  aria-label="転送先URLをコピー">
-                  <span class="copy-button__label">コピー</span>
-                </button>
+                </a>
               </div>
             </dd>
           </div>
@@ -534,72 +528,7 @@ $totalAccess = (int) $statistics['total_access'];
     </main>
   </div>
 
-  <script>
-    (() => {
-      const notice = document.getElementById('copyNotice');
-      let noticeTimer;
-
-      async function copyText(text) {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-          return;
-        }
-
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.setAttribute('readonly', '');
-        textarea.style.position = 'fixed';
-        textarea.style.left = '-9999px';
-
-        document.body.appendChild(textarea);
-        textarea.select();
-
-        const copied = document.execCommand('copy');
-        textarea.remove();
-
-        if (!copied) {
-          throw new Error('コピーに失敗しました。');
-        }
-      }
-
-      function showNotice(message, isError = false) {
-        clearTimeout(noticeTimer);
-
-        notice.textContent = message;
-        notice.classList.toggle('copy-notice--error', isError);
-        notice.classList.add('copy-notice--visible');
-
-        noticeTimer = setTimeout(() => {
-          notice.classList.remove('copy-notice--visible');
-        }, 2200);
-      }
-
-      document.querySelectorAll('.copy-button').forEach((button) => {
-        button.addEventListener('click', async () => {
-          const row = button.closest('.copy-row');
-          const valueElement = row.querySelector('.copy-value');
-          const label = button.querySelector('.copy-button__label');
-          const value = valueElement.textContent.trim();
-
-          try {
-            await copyText(value);
-
-            button.classList.add('copy-button--copied');
-            label.textContent = 'コピー済み';
-
-            showNotice('URLをコピーしました。');
-
-            setTimeout(() => {
-              button.classList.remove('copy-button--copied');
-              label.textContent = 'コピー';
-            }, 1800);
-          } catch (error) {
-            showNotice('コピーできませんでした。', true);
-          }
-        });
-      });
-    })();
-  </script>
 </body>
+<script src="index.js"></script>
 
 </html>

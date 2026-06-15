@@ -26,6 +26,30 @@
         0 24px 70px rgb(15 23 42 / 28%);
 }
 
+:root {
+    color-scheme: light;
+    --background: #f4f7fb;
+    --surface: #ffffff;
+    --surface-soft: #f8fafc;
+    --text: #172033;
+    --text-muted: #687386;
+    --border: #dfe5ee;
+    --border-strong: #cbd5e1;
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --primary-soft: #eef2ff;
+    --success: #16835b;
+    --success-soft: #e8f8f0;
+    --inactive: #6b7280;
+    --inactive-soft: #eef0f3;
+    --danger: #b42318;
+    --danger-soft: #fff1f0;
+    --shadow: 0 16px 40px rgba(31, 42, 68, 0.08);
+    --radius-large: 22px;
+    --radius-medium: 14px;
+    --radius-small: 9px;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -245,15 +269,16 @@ input:focus-visible,
     width: 150px;
 }
 
-.url-table th:nth-child(3) {
+.url-table th:nth-child(3),
+.url-table th:nth-child(4) {
     width: auto;
 }
 
-.url-table th:nth-child(4) {
+.url-table th:nth-child(5) {
     width: 180px;
 }
 
-.url-table th:nth-child(5) {
+.url-table th:nth-child(6) {
     width: 150px;
     text-align: right;
 }
@@ -588,14 +613,25 @@ input:focus-visible,
 }
 
 .detail-url {
-    display: block;
+    overflow-wrap: anywhere;
+    font-size: 0.88rem;
+    text-decoration: none;
+}
+
+.detail-url-dd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-url-target {
     overflow-wrap: anywhere;
     color: var(--primary);
     font-size: 0.88rem;
     text-decoration: none;
 }
 
-.detail-url:hover {
+.detail-url-target:hover {
     text-decoration: underline;
     text-underline-offset: 3px;
 }
@@ -736,5 +772,121 @@ input:focus-visible,
     *::after {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+
+.copy-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.copy-value {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", monospace;
+    font-size: 0.9rem;
+    font-weight: 650;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+.copy-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 96px;
+    min-height: 40px;
+    padding: 0 13px;
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    color: var(--primary);
+    background: var(--surface);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        background-color 160ms ease,
+        transform 160ms ease;
+}
+
+.copy-button:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.copy-button:active {
+    transform: translateY(1px);
+}
+
+.copy-button:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.25);
+    outline-offset: 2px;
+}
+
+.copy-button--copied {
+    color: var(--success);
+    border-color: rgba(22, 131, 91, 0.35);
+    background: var(--success-soft);
+}
+
+.copy-notice {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 100;
+    padding: 12px 17px;
+    border: 1px solid rgba(22, 131, 91, 0.28);
+    border-radius: 10px;
+    color: var(--success);
+    background: var(--success-soft);
+    box-shadow: 0 14px 34px rgba(31, 42, 68, 0.16);
+    font-size: 0.86rem;
+    font-weight: 800;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.copy-notice--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.copy-notice--error {
+    color: var(--danger);
+    border-color: #ffd5d1;
+    background: var(--danger-soft);
+}
+
+@media (max-width: 600px) {
+    .copy-row {
+        gap: 8px;
+    }
+
+    .copy-value {
+        font-size: 0.82rem;
+    }
+
+    .copy-button {
+        min-width: 88px;
+        padding-inline: 10px;
+    }
+
+    .copy-notice {
+        right: 16px;
+        bottom: 16px;
+        left: 16px;
+        text-align: center;
     }
 }

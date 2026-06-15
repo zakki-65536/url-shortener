@@ -66,11 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $destinationUrl = trim(
     (string) ($_POST['destination_url'] ?? '')
   );
-
-  $title = trim(
-    (string) ($_POST['title'] ?? '')
+  $place = trim(
+    (string) ($_POST['place'] ?? '')
   );
-
+  $target = trim(
+    (string) ($_POST['target'] ?? '')
+  );
   $customCode = trim(
     (string) ($_POST['code'] ?? '')
   );
@@ -93,8 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       'コードは4～32文字の英数字、ハイフン、アンダースコアで入力してください。';
   }
 
-  if (mb_strlen($title, 'UTF-8') > 255) {
-    $errors[] = 'タイトルは255文字以内で入力してください。';
+  if (mb_strlen($place, 'UTF-8') > 255) {
+    $errors[] = '掲載場所は255文字以内で入力してください。';
+  }
+  if (mb_strlen($target, 'UTF-8') > 255) {
+    $errors[] = 'リンク先は255文字以内で入力してください。';
   }
 
   if (!$errors) {
@@ -103,25 +107,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     for ($attempt = 0; $attempt < 10; $attempt++) {
       $code = $customCode !== ''
         ? $customCode
-        : generateShortCode(7);
+        : generateShortCode(6);
 
       try {
         $stmt = db()->prepare(
           'INSERT INTO short_links (
               code,
               destination_url,
-              title
+              place,
+              target
             ) VALUES (
               :code,
               :destination_url,
-              :title
+              :place,
+              :target
             )'
         );
 
         $stmt->execute([
           ':code'            => $code,
           ':destination_url' => $destinationUrl,
-          ':title'           => $title,
+          ':place'           => $place,
+          ':target'          => $target
         ]);
 
         $_SESSION['message'] =
@@ -131,9 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $created = true;
         break;
       } catch (PDOException $e) {
-        /*
-                 * 自動生成コードの重複なら再生成します。
-                 */
+        // 自動生成コードの重複なら再生成します。
         if (
           $e->getCode() === '23000' &&
           $customCode === ''
@@ -171,7 +176,8 @@ $stmt = db()->query(
         id,
         code,
         destination_url,
-        title,
+        place,
+        target,
         is_active,
         expires_at,
         created_at
@@ -242,7 +248,8 @@ $totalLinks = (int) db()
               <tr>
                 <th scope="col">状態</th>
                 <th scope="col">登録日</th>
-                <th scope="col">タイトル</th>
+                <th scope="col">掲載場所</th>
+                <th scope="col">リンク先</th>
                 <th scope="col">短縮URL</th>
                 <th scope="col">アクセス数</th>
               </tr>
@@ -283,8 +290,9 @@ $totalLinks = (int) db()
                   class="url-row"
                   tabindex="0"
                   role="button"
-                  aria-label="<?= e($link['title']) ?>の登録内容を表示"
-                  data-title="<?= e($link['title']) ?>"
+                  aria-label="<?= e($link['target']) ?>の登録内容を表示"
+                  data-place="<?= e($link['place']) ?>"
+                  data-target="<?= e($link['target']) ?>"
                   data-status="<?= $link['is_active']
                                   ? '有効'
                                   : '停止中' ?>"
@@ -304,14 +312,20 @@ $totalLinks = (int) db()
                   </td>
 
                   <td data-label="登録日">
-                    <time datetime="2026-06-13">
+                    <time>
                       <?= date('Y/m/d', strtotime($link['created_at'])) ?>
                     </time>
                   </td>
 
-                  <td data-label="タイトル">
+                  <td data-label="掲載場所">
                     <strong class="url-title">
-                      <?= e($link['title']) ?>
+                      <?= e($link['place']) ?>
+                    </strong>
+                  </td>
+
+                  <td data-label="リンク先">
+                    <strong class="url-title">
+                      <?= e($link['target']) ?>
                     </strong>
                   </td>
 
@@ -390,16 +404,32 @@ $totalLinks = (int) db()
 
         <div class="form-group">
           <label for="title">
-            タイトル
-            <span class="optional-label">任意</span>
+            掲載場所
+            <span class="required-label">必須</span>
           </label>
 
           <input
             type="text"
-            id="title"
-            name="title"
+            id="place"
+            name="place"
             maxlength="255"
-            placeholder="キャンペーンページ">
+            required
+            placeholder="260614お知らせメール">
+        </div>
+
+        <div class="form-group">
+          <label for="title">
+            リンク先
+            <span class="required-label">必須</span>
+          </label>
+
+          <input
+            type="text"
+            id="target"
+            name="target"
+            maxlength="255"
+            required
+            placeholder="申込フォーム">
         </div>
 
         <div class="form-group">
@@ -507,13 +537,16 @@ $totalLinks = (int) db()
 
           <div class="detail-list__item">
             <dt>短縮URL</dt>
-            <dd>
-              <a
-                href="#"
-                id="modalShortUrl"
-                class="detail-url"
-                target="_blank"
-                rel="noopener noreferrer"></a>
+            <dd class="detail-url-dd">
+              <div class="copy-row">
+                <span id="modalShortUrl" class="detail-url copy-value"></span>
+                <button
+                  class="copy-button"
+                  type="button"
+                  aria-label="転送先URLをコピー">
+                  <span class="copy-button__label">コピー</span>
+                </button>
+              </div>
             </dd>
           </div>
 
@@ -523,7 +556,7 @@ $totalLinks = (int) db()
               <a
                 href="#"
                 id="modalDestinationUrl"
-                class="detail-url"
+                class="detail-url detail-url-target"
                 target="_blank"
                 rel="noopener noreferrer"></a>
             </dd>
